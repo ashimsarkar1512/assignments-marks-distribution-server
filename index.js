@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 require('dotenv').config()
 const app =express();
@@ -38,11 +38,57 @@ async function run() {
 
 const AssignmentCollection=client.db('assignmentDB').collection('assignment')
 
-  app.post('/createAssignment',async(req,res)=>{
+
+
+app.get('/assignment',async(req,res)=>{
+            const cursor=AssignmentCollection.find();
+            const result=await cursor.toArray()
+            res.send(result)
+})
+
+app.get('/assignment/:id',async(req,res)=>{
+  const id=req.params.id;
+  const query={_id: new ObjectId(id)}
+  const result=await AssignmentCollection.findOne(query)
+  res.send(result)
+})
+
+
+app.put('/assignment/:id',async(req,res)=>{
+  const id=req.params.id;
+  const query={_id:new ObjectId(id)}
+  const options={upsert:true}
+  const updateAssignment=req.body;
+  const assignment={
+    $set:{
+      title:updateAssignment.title,
+      mark:updateAssignment.mark,
+      difficulty:updateAssignment.difficulty,
+      image:updateAssignment.image,
+      Description:updateAssignment.Description,
+      date:updateAssignment.date,
+
+    }
+  }
+
+  const result=await AssignmentCollection.updateOne(query,assignment,options)
+  res.send(result)
+})
+
+  app.post('/assignment',async(req,res)=>{
  const addAssignment=req.body
  
  const result=await AssignmentCollection.insertOne(addAssignment)
  res.send(result)
+  })
+
+
+  app.delete('/assignment/:email',async(req,res)=>{
+    const email=req.params.email;
+    console.log('please delete form database', email );
+    const query = { email: email };
+    const result=await AssignmentCollection.deleteOne(query);
+    res.send(result)
   })
 
 
