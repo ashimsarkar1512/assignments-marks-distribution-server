@@ -37,6 +37,8 @@ async function run() {
 //     await client.connect();
 
 const AssignmentCollection=client.db('assignmentDB').collection('assignment')
+const submitCollection=client.db('assignmentDB').collection('submitted')
+const FeaturedCollection=client.db('assignmentDB').collection('featured')
 
 
 
@@ -46,11 +48,29 @@ app.get('/assignment',async(req,res)=>{
             res.send(result)
 })
 
+app.get('/featured',async(req,res)=>{
+     
+  const cursor=FeaturedCollection.find()
+  const result=await cursor.toArray()
+  res.send(result)
+
+ })
+
 app.get('/assignment/:id',async(req,res)=>{
   const id=req.params.id;
   const query={_id: new ObjectId(id)}
   const result=await AssignmentCollection.findOne(query)
   res.send(result)
+})
+
+app.get('/myAssignment/:email',async(req,res)=>{
+
+  const email=req.params.email;
+    
+    const query = { email: email };
+    const result=await AssignmentCollection.find(query).toArray();
+    res.send(result)
+
 })
 
 
@@ -88,6 +108,12 @@ app.put('/assignment/:id',async(req,res)=>{
     console.log('please delete form database', email );
     const query = { email: email };
     const result=await AssignmentCollection.deleteOne(query);
+    res.send(result)
+  })
+
+  app.post('/submit', async(req,res)=>{
+    const submitAssignment=req.body;
+    const result=await submitCollection.insertOne(submitAssignment);
     res.send(result)
   })
 
