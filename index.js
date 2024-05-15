@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt=require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 require('dotenv').config()
@@ -42,11 +43,33 @@ const FeaturedCollection=client.db('assignmentDB').collection('featured')
 
 
 
+app.post('/jwt',async(req,res)=>{
+  const user=req.body
+  console.log('user for token',user)
+  const token=jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn:'7d'})
+  res.cookie('token',token,{
+    httpOnly: true,
+  secure: true,
+  sameSite:'none',
+  })
+  .send({success:true})
+})
+
 app.get('/assignment',async(req,res)=>{
-            const cursor=AssignmentCollection.find();
+  const filter=req.query.filter
+ let query={}
+ if(filter){
+  query = { difficulty: { $regex: new RegExp(filter, 'i') } };
+  // query = { difficulty:filter };
+ }
+            const cursor=AssignmentCollection.find(query);
+
             const result=await cursor.toArray()
             res.send(result)
+            console.log(result);
 })
+
+
 
 app.get('/featured',async(req,res)=>{
      
@@ -116,6 +139,28 @@ app.put('/assignment/:id',async(req,res)=>{
     const result=await submitCollection.insertOne(submitAssignment);
     res.send(result)
   })
+
+
+  app.get('/mySubmit/:email',async(req,res)=>{
+
+    const email=req.params.email;
+      
+      const query = { submit_email:email };
+      const result=await submitCollection.find(query).toArray();
+      res.send(result)
+  
+  })
+  
+  app.get('/pending/:email',async(req,res)=>{
+
+    const email=req.params.email;
+      
+      const query = {'created.email':email };
+      const result=await submitCollection.find(query).toArray();
+      res.send(result)
+  
+  })
+  
 
 
 
