@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const jwt=require('jsonwebtoken')
+const jwt=require('jsonwebtoken');
+const cookieParser=require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 require('dotenv').config()
@@ -13,11 +14,15 @@ app.use(
             cors({
               origin: [
                 "http://localhost:5173",
+                'http://localhost:5174',
+                "https://assignments-mark-distribution.firebaseapp.com",
+                "https://assignments-mark-distribution.web.app"
               ],
               credentials: true,
             })
           );
 app.use(express.json())
+app.use(cookieParser())
 
 
 
@@ -32,6 +37,27 @@ const client = new MongoClient(uri, {
   }
 });
 
+const logger=(req,res,next)=>{
+  console.log('log:info',req.method,req.url);
+  next()
+}
+const verifyToken=(req,res,next)=>{
+   const token=req?.cookies?.token
+  //  console.log('token in the middleware',token);
+
+  if(!token){
+    return res.status(401).send({massage:'unauthorized access'})
+  }
+  jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded)=>{
+    if(err){
+      return res.status(401).send({massage:'unauthorized access'})
+    }
+    req.user=decoded
+    next()
+  })
+  next()
+}
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -43,7 +69,7 @@ const FeaturedCollection=client.db('assignmentDB').collection('featured')
 
 
 
-app.post('/jwt',async(req,res)=>{
+app.post('/jwt',logger,async(req,res)=>{
   const user=req.body
   console.log('user for token',user)
   const token=jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn:'7d'})
@@ -55,7 +81,15 @@ app.post('/jwt',async(req,res)=>{
   .send({success:true})
 })
 
-app.get('/assignment',async(req,res)=>{
+
+app.post('/logout',async(req,res)=>{
+  const user=req.body;
+  console.log('logging out',user);
+  res.clearCookie('token',{maxAge:0})
+  .send({success:true})
+})
+
+app.get('/assignment', async(req,res)=>{
   const filter=req.query.filter
  let query={}
  if(filter){
