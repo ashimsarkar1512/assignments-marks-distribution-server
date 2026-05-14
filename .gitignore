@@ -1,8 +1,33 @@
-node_modules
-.env
-.vercel
-
-.gitignore
-
-temp_auto_push.bat
+# dependencies
+node_modules
+
+# environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# build output
+.next
+out
+dist
+build
+
+# vercel
+.vercel
+
+# logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+branch_structure.json
+temp_auto_push.bat
 temp_interactive_push.bat
+config.bat
